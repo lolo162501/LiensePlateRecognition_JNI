@@ -9,9 +9,8 @@
 using namespace cv;
 using namespace std;
 
-void extractSubMat(JNIEnv *env, jobject obj,
-                   Mat &mat, Rect rect, int startY, int endY,
-                   Scalar scalarColor, jboolean isRotate) {
+Mat
+extractSubMat(Mat &mat, Rect rect, int startY, int endY, Scalar scalarColor, jboolean isRotate) {
     Point pt1 = Point(rect.x, startY);
     Point pt2 = Point(rect.x + rect.width, rect.y + endY);
     Rect rect1 = Rect(pt1, pt2);
@@ -21,13 +20,10 @@ void extractSubMat(JNIEnv *env, jobject obj,
     if (isRotate) {
         flip(subMat, subMat, -1);
     }
+    __android_log_print(ANDROID_LOG_ERROR, "Callback JNI", "end");
     if (subMat.cols > 100 && subMat.rows > 150) {
-        jclass clazz = env->GetObjectClass(obj);
-        jmethodID mID = env->GetMethodID(clazz, "detectTextWithOCR", "(Z)V");
-        env->CallVoidMethod(obj, mID, 10);
-        __android_log_print(ANDROID_LOG_ERROR, "Callback JNI", "end");
+        return subMat;
     }
-
 }
 
 extern "C"
@@ -63,9 +59,14 @@ Java_com_example_lienserecognition_1opencv_1demo_MainActivity_processCameraFrame
     if (largest_area >= 3000) {
 //        drawContours(srcMat, largest_contours, -1, redColor, 5);
         Rect rect = boundingRect((const _InputArray &) largest_contours.back());
-        extractSubMat(env, obj, srcMat, rect, rect.y,
-                      rect.height / 2, redColor, false);
-        extractSubMat(env, obj, srcMat, rect, rect.y + rect.height / 2,
-                      rect.height, greenColor, true);
+        Mat subMat1 = extractSubMat(srcMat, rect, rect.y,
+                                    rect.height / 2, redColor, false);
+        Mat subMat2 = extractSubMat(srcMat, rect, rect.y + rect.height / 2,
+                                    rect.height, greenColor, true);
+        jclass thisClass = env->GetObjectClass(obj);
+        jmethodID methodId = env->GetMethodID(thisClass, "printNum", "(I)V");
+        if (NULL == methodId)
+            return;
+        env->CallVoidMethod(obj, methodId, 17);
     }
 }

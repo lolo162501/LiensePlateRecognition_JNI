@@ -96,7 +96,10 @@ public class MainActivity extends CameraActivity implements CameraBridgeViewBase
 
     public native void processCameraFrame(long inputImage);
 
-    public void detectTextWithOCR(boolean isDetect) {
-        System.out.println("detectTextWithOCR -> " + isDetect);
+    //    public void detectTextWithOCR(boolean isDetect) {
+//        System.out.println("detectTextWithOCR -> " + isDetect);
+//    }
+    public  void printNum(int i) {
+        System.out.println("Got int from C++: " + i);
     }
 }
