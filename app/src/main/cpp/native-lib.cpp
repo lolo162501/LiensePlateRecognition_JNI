@@ -9,20 +9,19 @@
 using namespace cv;
 using namespace std;
 
-Mat
+void
 extractSubMat(Mat &mat, Rect rect, int startY, int endY, Scalar scalarColor, jboolean isRotate) {
     Point pt1 = Point(rect.x, startY);
     Point pt2 = Point(rect.x + rect.width, rect.y + endY);
     Rect rect1 = Rect(pt1, pt2);
-//    cv::rectangle(mat, rect1, scalarColor, 5);
-    rectangle(mat, rect1.tl(), rect1.br(), scalarColor, 5);
-    Mat subMat = mat(rect1);
-    if (isRotate) {
-        flip(subMat, subMat, -1);
-    }
-    __android_log_print(ANDROID_LOG_ERROR, "Callback JNI", "end");
-    if (subMat.cols > 100 && subMat.rows > 150) {
-        return subMat;
+    cv::rectangle(mat, rect1, scalarColor, 5);
+//    rectangle(mat, rect1.tl(), rect1.br(), scalarColor, 5);
+    if (rect1.height > 100 && rect1.width > 150) {
+        Mat subMat = mat(rect1);
+        if (isRotate) {
+            flip(subMat, subMat, -1);
+        }
+        __android_log_print(ANDROID_LOG_ERROR, "Callback JNI", "end");
     }
 }
 
@@ -59,14 +58,9 @@ Java_com_example_lienserecognition_1opencv_1demo_MainActivity_processCameraFrame
     if (largest_area >= 3000) {
 //        drawContours(srcMat, largest_contours, -1, redColor, 5);
         Rect rect = boundingRect((const _InputArray &) largest_contours.back());
-        Mat subMat1 = extractSubMat(srcMat, rect, rect.y,
-                                    rect.height / 2, redColor, false);
-        Mat subMat2 = extractSubMat(srcMat, rect, rect.y + rect.height / 2,
-                                    rect.height, greenColor, true);
-        jclass thisClass = env->GetObjectClass(obj);
-        jmethodID methodId = env->GetMethodID(thisClass, "printNum", "(I)V");
-        if (NULL == methodId)
-            return;
-        env->CallVoidMethod(obj, methodId, 17);
+        extractSubMat(srcMat, rect, rect.y,
+                      rect.height / 2, redColor, false);
+        extractSubMat(srcMat, rect, rect.y + rect.height / 2,
+                      rect.height, greenColor, true);
     }
 }
