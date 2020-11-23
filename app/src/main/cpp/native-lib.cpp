@@ -4,22 +4,38 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/features2d.hpp>
 #include <vector>
-
-void extractSubMat(cv::Mat &mat, cv::Rect rect, int startY, int endY, cv::Scalar scalarColor) {
-    cv::Point pt1 = cv::Point(rect.x, startY);
-    cv::Point pt2 = cv::Point(rect.x + rect.width, rect.y + endY);
-    cv::Rect rect1 = cv::Rect(pt1, pt2);
-    cv::rectangle(mat, rect1, scalarColor, 5);
-}
+#include <android/log.h>
 
 using namespace cv;
 using namespace std;
 
+void extractSubMat(JNIEnv *env, jobject obj,
+                   Mat &mat, Rect rect, int startY, int endY,
+                   Scalar scalarColor, jboolean isRotate) {
+    Point pt1 = Point(rect.x, startY);
+    Point pt2 = Point(rect.x + rect.width, rect.y + endY);
+    Rect rect1 = Rect(pt1, pt2);
+//    cv::rectangle(mat, rect1, scalarColor, 5);
+    rectangle(mat, rect1.tl(), rect1.br(), scalarColor, 5);
+    Mat subMat = mat(rect1);
+    if (isRotate) {
+        flip(subMat, subMat, -1);
+    }
+    if (subMat.cols > 100 && subMat.rows > 150) {
+        jclass clazz = env->GetObjectClass(obj);
+        jmethodID mID = env->GetMethodID(clazz, "detectTextWithOCR", "(Z)V");
+        env->CallVoidMethod(obj, mID, 10);
+        __android_log_print(ANDROID_LOG_ERROR, "Callback JNI", "end");
+    }
+
+}
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_example_lienserecognition_1opencv_1demo_MainActivity_processCameraFrame(JNIEnv *env,
-                                                                                 jobject thiz,
+                                                                                 jobject obj,
                                                                                  jlong srcImage) {
+    __android_log_print(ANDROID_LOG_ERROR, "Callback JNI", "begin");
     Mat &srcMat = *(Mat *) srcImage;
     Mat inputSrc = srcMat.clone();
     Scalar lowerColor = Scalar(22, 93, 0);
@@ -47,16 +63,9 @@ Java_com_example_lienserecognition_1opencv_1demo_MainActivity_processCameraFrame
     if (largest_area >= 3000) {
 //        drawContours(srcMat, largest_contours, -1, redColor, 5);
         Rect rect = boundingRect((const _InputArray &) largest_contours.back());
-        extractSubMat(srcMat, rect, rect.y, rect.height / 2, redColor);
-        extractSubMat(srcMat, rect, rect.y + rect.height / 2, rect.height, greenColor);
+        extractSubMat(env, obj, srcMat, rect, rect.y,
+                      rect.height / 2, redColor, false);
+        extractSubMat(env, obj, srcMat, rect, rect.y + rect.height / 2,
+                      rect.height, greenColor, true);
     }
-}
-
-
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_example_lienserecognition_1opencv_1demo_MainActivity_detectTextWithOCR(JNIEnv *env,
-                                                                                jobject thiz,
-                                                                                jobject rect) {
-
 }

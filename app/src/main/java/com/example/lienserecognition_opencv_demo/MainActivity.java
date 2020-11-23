@@ -9,7 +9,6 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Rect;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -97,5 +96,7 @@ public class MainActivity extends CameraActivity implements CameraBridgeViewBase
 
     public native void processCameraFrame(long inputImage);
 
-    public native void detectTextWithOCR(Rect rect);
+    public void detectTextWithOCR(boolean isDetect) {
+        System.out.println("detectTextWithOCR -> " + isDetect);
+    }
 }
